@@ -1,0 +1,1 @@
+timestamp,source_ip,destination_ip,avg_bwd_segment_size,bwd_packet_length_mean,init_win_bytes_forward,fwd_iat_max,fwd_iat_total,max_packet_length,bwd_packet_length_max,bwd_packet_length_std,bwd_iat_max,init_win_bytes_backward,bwd_iat_total

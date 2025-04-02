@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Traffic Collector</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='user_monitoring.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-network-wired"></i> Network Traffic Collector</h1>
+        
+        <div class="control-panel">
+            <button id="startBtn" class="btn btn-start">
+                <i class="fas fa-play"></i> Start Capture
+            </button>
+            <button id="stopBtn" class="btn btn-stop" disabled>
+                <i class="fas fa-stop"></i> Stop Capture
+            </button>
+        </div>
+        
+        <div id="status" class="status status-ready">
+            <i class="fas fa-info-circle"></i> Ready to start capture
+        </div>
+        
+        <div class="info-panel">
+            <div class="info-card">
+                <h3><i class="fas fa-file-csv"></i> Output File</h3>
+                <p id="fileInfo">Not capturing</p>
+            </div>
+            <div class="info-card">
+                <h3><i class="fas fa-tachometer-alt"></i> Packets Captured</h3>
+                <p id="packetCount">0</p>
+            </div>
+        </div>
+        
+        <div class="log-container">
+            <h3><i class="fas fa-clipboard-list"></i> Activity Log</h3>
+            <div id="activityLog">
+                <div class="log-entry">System ready</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='user_monitoring.js') }}"></script>
+</body>
+</html>

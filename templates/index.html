@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intrusion Detection System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+</head>
+<body>
+
+    <!-- Fixed Header -->
+    <div class="header">
+        <h2>IDS</h2>
+        
+        <!-- Dataset Loading Dropdown -->
+        <div class="dropdown">
+            <button id="loadButton" class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                Load Dataset
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" onclick="loadDataset('train')">Train Dataset</a></li>
+                <li><a class="dropdown-item" onclick="loadDataset('train_test')">Train + Test Datasets</a></li>
+                <li><a class="dropdown-item" onclick="loadDataset('train_validation_test')">Train + Validation + Test Datasets</a></li>
+            </ul>
+        </div>
+
+        <!-- Preprocess Dropdown -->
+        <div class="dropdown">
+            <button id="preprocessDropdown" class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                Preprocess
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" onclick="processData('replace_missing_values')">Replace Missing Values</a></li>
+            </ul>
+        </div>
+
+        <!-- Feature Selection Dropdown -->
+        <div class="dropdown">
+            <button id="featureSelectionDropdown" class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                Feature Selection
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" onclick="featureSelection('benford_chi_square')">Benford's Chi-Square</a></li>
+            </ul>
+        </div>
+
+        <!-- Normalization Dropdown -->
+        <div class="dropdown">
+            <button id="normalizeDropdown" class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                Normalize
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" onclick="normalizeData('min-max')">Min-Max Scaling</a></li>
+                <li><a class="dropdown-item" onclick="normalizeData('z-score')">Z-Score Scaling</a></li>
+                <li><a class="dropdown-item" onclick="normalizeData('quantile')">Quantile Transformation</a></li>
+            </ul>
+        </div>
+
+        <!-- Training Dropdown -->
+        <div class="dropdown">
+            <button id="trainDropdown" class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                Train
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" onclick="trainModel('decision_tree')">Decision Tree</a></li>
+                <li><a class="dropdown-item" onclick="trainModel('naive_bayes')">Naive Bayes</a></li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Modal for File Purpose Selection -->
+    <div class="modal fade" id="filePurposeModal" tabindex="-1" aria-labelledby="filePurposeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filePurposeModalLabel" style="color: black;">Specify File Purpose</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p style="color: black;">Please specify the purpose of each file:</p>
+                    <div id="filePurposeForm" style="color: black;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="submitFilePurposes()">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner Modal -->
+    <div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-transparent border-0">
+                <div class="modal-body text-center">
+                    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="text-white mt-3" id="loadingMessage">Processing...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Section to Display Output -->
+    <div class="container mt-5">
+        <h1 class="text-white">Intrusion Detection System</h1>
+        
+        <!-- Status Message Area -->
+        <div id="statusMessage" class="alert alert-info">
+            <i class="fas fa-info-circle"></i> Please start by loading a dataset
+        </div>
+
+        <!-- Main Output Section -->
+        <div id="outputSection" class="output-container" style="display: none;">
+            <div id="currentStepOutput"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='index.js') }}"></script>
+
+</body>
+</html>
