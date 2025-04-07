@@ -4,14 +4,16 @@ import csv
 import os
 import threading
 from datetime import datetime
+from collections import deque
 
 prediction_routes = Blueprint('prediction_routes', __name__)
 
 # Global variables
 is_monitoring = False
 csv_file = 'network_traffic_features.csv'
+packet_queue = deque(maxlen=100)  # Stores last 100 packets for display
+capture_thread = None
 
-# List of desired feature names
 fieldnames = [
     'timestamp', 'source_ip', 'destination_ip', 'avg_bwd_segment_size', 
     'bwd_packet_length_mean', 'init_win_bytes_forward', 'fwd_iat_max', 
@@ -26,7 +28,6 @@ def select_network_interface():
     for iface in conf.ifaces:
         print(f"{iface}: {conf.ifaces[iface].name}")
     
-    # Prefer Ethernet or Wi-Fi interfaces
     for iface in conf.ifaces:
         iface_name = conf.ifaces[iface].name
         if 'Ethernet' in iface_name or 'Wi-Fi' in iface_name:
@@ -59,33 +60,59 @@ def process_packet(packet):
             if 'window' in packet[TCP].fields:
                 row['init_win_bytes_forward'] = packet[TCP].window
 
-        # Write to CSV if all required fields are present
-        with open(csv_file, 'a', newline='') as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            if all(value is not None for value in row.values()):
-                writer.writerow(row)
+        packet_queue.append(row)
+        
+        # Write to CSV if we have basic packet info
+        if all(row[k] is not None for k in ['timestamp', 'source_ip', 'destination_ip', 'max_packet_length']):
+            try:
+                with open(csv_file, 'a', newline='') as f:
+                    writer = csv.DictWriter(f, fieldnames=fieldnames)
+                    writer.writerow(row)
+            except Exception as e:
+                print(f"Error writing to CSV: {str(e)}")
+        
+        return row
+    return None
+
+@prediction_routes.route('/get_packets')
+def get_packets():
+    """Endpoint to get recent packets for display"""
+    return jsonify({
+        'packets': list(packet_queue),
+        'count': len(packet_queue)
+    })
 
 def start_sniffing():
     """Start packet capture on selected interface"""
-    # Initialize CSV file
-    with open(csv_file, 'w', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        writer.writeheader()
+    try:
+        # Initialize CSV file
+        with open(csv_file, 'w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
 
-    # Select network interface
-    iface = select_network_interface()
-    if iface:
-        sniff(prn=process_packet, store=False, stop_filter=lambda x: not is_monitoring, iface=iface)
-    else:
-        print("No suitable network interface found")
+        # Select network interface
+        iface = select_network_interface()
+        if iface:
+            print(f"Starting capture on interface {iface}")
+            sniff(prn=process_packet, store=False, stop_filter=lambda x: not is_monitoring, iface=iface)
+        else:
+            print("No suitable network interface found")
+    except Exception as e:
+        print(f"Capture error: {str(e)}")
 
 @prediction_routes.route('/start_capture', methods=['POST'])
 def start_capture():
-    global is_monitoring
-    is_monitoring = True
+    global is_monitoring, capture_thread
     
-    # Start capture in background thread
-    threading.Thread(target=start_sniffing).start()
+    if is_monitoring:
+        return jsonify({'error': 'Capture already running'}), 400
+    
+    is_monitoring = True
+    packet_queue.clear()
+    
+    # Start capture in a new thread
+    capture_thread = threading.Thread(target=start_sniffing)
+    capture_thread.start()
     
     return jsonify({
         'status': 'Capture started',
@@ -96,9 +123,19 @@ def start_capture():
 @prediction_routes.route('/stop_capture', methods=['POST'])
 def stop_capture():
     global is_monitoring
+    
+    if not is_monitoring:
+        return jsonify({'error': 'No capture running'}), 400
+    
     is_monitoring = False
+    
+    # Wait for thread to finish
+    if capture_thread and capture_thread.is_alive():
+        capture_thread.join(timeout=5)
+    
     return jsonify({
         'status': 'Capture stopped',
         'output_file': os.path.abspath(csv_file),
-        'message': f"Capture stopped. Data saved to {csv_file}"
+        'count': len(packet_queue),
+        'message': f"Capture stopped. {len(packet_queue)} packets captured"
     })

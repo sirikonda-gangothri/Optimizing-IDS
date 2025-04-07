@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function showLoading(message = "Processing...") {
     document.getElementById('loadingMessage').textContent = message;
     loadingModal.show();
-}
+} 
 
 function hideLoading() {
     loadingModal.hide();
@@ -121,13 +121,11 @@ function uploadFiles(filePurposes = []) {
     let formData = new FormData();
 
     if (datasetType === "train_validation_test" || datasetType === "train_test") {
-        // Add files with their purposes
         filePurposes.forEach((item, index) => {
             formData.append(`file${index + 1}`, item.file);
             formData.append(`file${index + 1}_purpose`, item.purpose);
         });
     } else {
-        // Add files directly for train option
         uploadedFiles.forEach((file, index) => {
             formData.append(`file${index + 1}`, file);
         });
@@ -145,7 +143,22 @@ function uploadFiles(filePurposes = []) {
         } else {
             updateStatusMessage("Dataset uploaded successfully!", 'success');
             
-            // Display upload results
+            // Create the dimensions table rows
+            const dimensionsRows = `
+                <tr>
+                    <td>Train Dataset</td>
+                    <td>${data.train_dimensions || 'Not uploaded'}</td>
+                </tr>
+                <tr>
+                    <td>Validation Dataset</td>
+                    <td>${data.validation_dimensions || 'Not uploaded'}</td>
+                </tr>
+                <tr>
+                    <td>Test Dataset</td>
+                    <td>${data.test_dimensions || 'Not uploaded'}</td>
+                </tr>
+            `;
+
             const outputHTML = `
                 <div class="step-result">
                     <h3 class="step-title">Dataset Upload Results</h3>
@@ -165,18 +178,7 @@ function uploadFiles(filePurposes = []) {
                                 <th>Dataset</th>
                                 <th>Dimensions</th>
                             </tr>
-                            <tr>
-                                <td>Train Dataset</td>
-                                <td>${data.train_dimensions || 'Not uploaded'}</td>
-                            </tr>
-                            <tr>
-                                <td>Validation Dataset</td>
-                                <td>${data.validation_dimensions || 'Not uploaded'}</td>
-                            </tr>
-                            <tr>
-                                <td>Test Dataset</td>
-                                <td>${data.test_dimensions || 'Not uploaded'}</td>
-                            </tr>
+                            ${dimensionsRows}
                         </table>
                     </div>
                 </div>
@@ -192,6 +194,7 @@ function uploadFiles(filePurposes = []) {
     });
 }
 
+// Function to process actions (Preprocessing)
 // Function to process actions (Preprocessing)
 function processData(action) {
     showLoading("Preprocessing data...");
@@ -219,7 +222,7 @@ function processData(action) {
             <div class="step-result">
                 <h3 class="step-title">Preprocessing Results</h3>
                 <div class="alert alert-success">
-                    ${data.message || "Data preprocessing completed"}
+                    ${data.message}
                 </div>
                 <div class="mt-3">
                     <h4 style="color: lightblue;">Dataset After Preprocessing:</h4>
@@ -227,29 +230,27 @@ function processData(action) {
                         <tr>
                             <th>Dataset</th>
                             <th>Dimensions</th>
-                            <th>Missing Values</th>
                         </tr>
                         <tr>
                             <td>Train Dataset</td>
                             <td>${data.train_dimensions || 'N/A'}</td>
-                            <td>${data.train_missing || 'N/A'}</td>
                         </tr>
                         <tr>
                             <td>Validation Dataset</td>
                             <td>${data.validation_dimensions || 'N/A'}</td>
-                            <td>${data.validation_missing || 'N/A'}</td>
                         </tr>
                         <tr>
                             <td>Test Dataset</td>
                             <td>${data.test_dimensions || 'N/A'}</td>
-                            <td>${data.test_missing || 'N/A'}</td>
                         </tr>
                     </table>
                 </div>
                 ${data.details ? `
                 <div class="mt-3">
                     <h4 style="color: lightblue;">Details:</h4>
-                    <pre>${JSON.stringify(data.details, null, 2)}</pre>
+                    <ul>
+                        ${data.details.map(detail => `<li>${detail}</li>`).join('')}
+                    </ul>
                 </div>
                 ` : ''}
             </div>
@@ -327,6 +328,7 @@ function featureSelection(method) {
     });
 }
 
+// Function to normalize data
 // Function to normalize data
 function normalizeData(type) {
     showLoading(`Normalizing data (${type})...`);

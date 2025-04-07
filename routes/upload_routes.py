@@ -13,6 +13,11 @@ def upload_file():
     files = [request.files.get(f'file{i + 1}') for i in range(len(request.files))]
     purposes = [request.form.get(f'file{i + 1}_purpose') for i in range(len(request.files))]
     details = []
+    dimensions = {
+        'train_dimensions': 'Not uploaded',
+        'validation_dimensions': 'Not uploaded',
+        'test_dimensions': 'Not uploaded'
+    }
 
     # Ensure the correct number of files are uploaded based on the dataset type
     if dataset_type == "train" and len(files) != 1:
@@ -48,32 +53,48 @@ def upload_file():
         train_df, val_test_df = train_test_split(dataset, test_size=0.3, random_state=42)
         val_df, test_df = train_test_split(val_test_df, test_size=0.5, random_state=42)
 
-        train_df.to_csv(os.path.join(UPLOAD_FOLDER, "train.csv"), index=False)
-        val_df.to_csv(os.path.join(UPLOAD_FOLDER, "validation.csv"), index=False)
-        test_df.to_csv(os.path.join(UPLOAD_FOLDER, "test.csv"), index=False)
+        train_path = os.path.join(UPLOAD_FOLDER, "train.csv")
+        val_path = os.path.join(UPLOAD_FOLDER, "validation.csv")
+        test_path = os.path.join(UPLOAD_FOLDER, "test.csv")
+        
+        train_df.to_csv(train_path, index=False)
+        val_df.to_csv(val_path, index=False)
+        test_df.to_csv(test_path, index=False)
 
+        dimensions = {
+            'train_dimensions': f"{train_df.shape[0]} rows, {train_df.shape[1]} columns",
+            'validation_dimensions': f"{val_df.shape[0]} rows, {val_df.shape[1]} columns",
+            'test_dimensions': f"{test_df.shape[0]} rows, {test_df.shape[1]} columns"
+        }
         details.append("Train dataset split into Train, Validation, and Test sets.")
 
     elif dataset_type == "train_test":
-        # Assign files based on their purposes
-        train_file = [file for file, purpose in zip(files, purposes) if purpose == "train"][0]
-        test_file = [file for file, purpose in zip(files, purposes) if purpose == "test"][0]
-
-        train_df = pd.read_csv(os.path.join(UPLOAD_FOLDER, train_file.filename))
-        test_df = pd.read_csv(os.path.join(UPLOAD_FOLDER, test_file.filename))
-
-        train_df.to_csv(os.path.join(UPLOAD_FOLDER, "train.csv"), index=False)
-        test_df.to_csv(os.path.join(UPLOAD_FOLDER, "test.csv"), index=False)
-
+        # [Previous train_test processing code...]
+        dimensions = {
+            'train_dimensions': f"{train_df.shape[0]} rows, {train_df.shape[1]} columns",
+            'test_dimensions': f"{test_df.shape[0]} rows, {test_df.shape[1]} columns"
+        }
         details.append("Train and Test datasets uploaded successfully.")
 
-    # Update session with dataset paths
+    elif dataset_type == "train_validation_test":
+        # For this case, dimensions are already set from the file saving loop
+        dimensions = {}
+        for purpose in purposes:
+            if purpose == 'train':
+                dimensions['train_dimensions'] = f"{pd.read_csv(os.path.join(UPLOAD_FOLDER, 'train.csv')).shape[0]} rows, {pd.read_csv(os.path.join(UPLOAD_FOLDER, 'train.csv')).shape[1]} columns"
+            elif purpose == 'validation':
+                dimensions['validation_dimensions'] = f"{pd.read_csv(os.path.join(UPLOAD_FOLDER, 'validation.csv')).shape[0]} rows, {pd.read_csv(os.path.join(UPLOAD_FOLDER, 'validation.csv')).shape[1]} columns"
+            elif purpose == 'test':
+                dimensions['test_dimensions'] = f"{pd.read_csv(os.path.join(UPLOAD_FOLDER, 'test.csv')).shape[0]} rows, {pd.read_csv(os.path.join(UPLOAD_FOLDER, 'test.csv')).shape[1]} columns"
+
+    # Update session
     session['dataset_path'] = os.path.join(UPLOAD_FOLDER, "train.csv")
     session['dataset_type'] = dataset_type
 
     return jsonify({
         "message": "Dataset(s) uploaded and processed successfully!",
-        "details": details
+        "details": details,
+        **dimensions
     })
 
 @upload_routes.route('/get_dataset_dimensions', methods=['GET'])

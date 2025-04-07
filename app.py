@@ -32,4 +32,4 @@ def user_monitoring():
     return render_template('user_monitoring.html')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True) 

@@ -6,41 +6,96 @@
     <title>Network Traffic Collector</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='user_monitoring.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <h1><i class="fas fa-network-wired"></i> Network Traffic Collector</h1>
-        
-        <div class="control-panel">
-            <button id="startBtn" class="btn btn-start">
-                <i class="fas fa-play"></i> Start Capture
-            </button>
-            <button id="stopBtn" class="btn btn-stop" disabled>
-                <i class="fas fa-stop"></i> Stop Capture
-            </button>
-        </div>
-        
-        <div id="status" class="status status-ready">
-            <i class="fas fa-info-circle"></i> Ready to start capture
-        </div>
-        
-        <div class="info-panel">
-            <div class="info-card">
-                <h3><i class="fas fa-file-csv"></i> Output File</h3>
-                <p id="fileInfo">Not capturing</p>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-content">
+                <i class="fas fa-network-wired header-icon"></i>
+                <h1>Network Traffic Collector</h1>
             </div>
-            <div class="info-card">
-                <h3><i class="fas fa-tachometer-alt"></i> Packets Captured</h3>
-                <p id="packetCount">0</p>
-            </div>
-        </div>
-        
-        <div class="log-container">
-            <h3><i class="fas fa-clipboard-list"></i> Activity Log</h3>
-            <div id="activityLog">
-                <div class="log-entry">System ready</div>
-            </div>
-        </div>
+        </header>
+
+        <main class="app-main">
+            <section class="control-section">
+                <div class="control-panel">
+                    <button id="startBtn" class="btn btn-primary">
+                        <i class="fas fa-play"></i> Start Capture
+                    </button>
+                    <button id="stopBtn" class="btn btn-danger" disabled>
+                        <i class="fas fa-stop"></i> Stop Capture
+                    </button>
+                </div>
+                
+                <div id="status" class="status-card status-ready">
+                    <i class="fas fa-info-circle"></i> 
+                    <span class="status-text">Ready to start capture</span>
+                </div>
+            </section>
+
+            <section class="stats-section">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-file-export"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Output File</h3>
+                        <p id="fileInfo" class="stat-value">Not capturing</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-tachometer-alt"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Packets Captured</h3>
+                        <p id="packetCount" class="stat-value">0</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="packet-section">
+                <div class="section-header">
+                    <i class="fas fa-table"></i>
+                    <h2>Live Packet Data</h2>
+                </div>
+                <div class="table-container">
+                    <table id="packetTable">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Source IP</th>
+                                <th>Destination IP</th>
+                                <th>Length</th>
+                                <th>Window</th>
+                            </tr>
+                        </thead>
+                        <tbody id="packetTableBody">
+                            <tr class="empty-row">
+                                <td colspan="5">No packets captured yet</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="log-section">
+                <div class="section-header">
+                    <i class="fas fa-clipboard-list"></i>
+                    <h2>Activity Log</h2>
+                </div>
+                <div id="activityLog" class="log-container">
+                    <div class="log-entry">System ready</div>
+                    <div class="log-entry">[<span class="log-time">12:00:00 PM</span>] System initialized</div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>Network Traffic Collector v1.0</p>
+        </footer>
     </div>
 
     <script src="{{ url_for('static', filename='user_monitoring.js') }}"></script>
