@@ -11,7 +11,7 @@
     <div class="container">
         <h1>Welcome to Intrusion Detection System</h1>
         <button onclick="redirectToAuth()">For Developers</button>
-        <button onclick="redirectToUserMonitoring()">For Users</button>
+        <button onclick="redirectToTraffic()">For Users</button>
     </div>
 
     <script>
@@ -19,8 +19,8 @@
             window.location.href = "/auth";
         }
         
-        function redirectToUserMonitoring() {
-            window.location.href = "/user_monitoring";
+        function redirectToTraffic() {
+            window.location.href = "/traffic/";  // Add trailing slash
         }
     </script>
 

@@ -402,40 +402,85 @@ function normalizeData(type) {
 
 // Function to train models
 function trainModel(model) {
-    showLoading(`Training ${model} model...`);
+    const modelNames = {
+        'decision_tree': 'Decision Tree',
+        'naive_bayes': 'Naive Bayes',
+        'knn': 'K-Nearest Neighbors',
+        'svm': 'Support Vector Machine',
+        'logistic_regression': 'Logistic Regression',
+        'lda': 'Linear Discriminant Analysis',
+        'qda': 'Quadratic Discriminant Analysis',
+        'random_forest': 'Random Forest',
+        'mlp': 'Multi-layer Perceptron',
+        'gradient_boosting': 'Gradient Boosting'
+    };
+
+    // Validate model name
+    if (!modelNames[model]) {
+        updateStatusMessage(`Invalid model: ${model}`, 'danger');
+        return;
+    }
+
+    showLoading(`Training ${modelNames[model]} model...`);
     showOutputSection();
     clearCurrentStepOutput();
     
-    fetch(`/train?model=${model}`, { method: "POST" })
-    .then(response => response.json())
+    fetch(`/train?model=${model}`, { 
+        method: "POST",
+        headers: {
+            'Accept': 'application/json'
+        }
+    })
+    .then(async response => {
+        const contentType = response.headers.get('content-type');
+        const responseData = contentType?.includes('application/json') 
+            ? await response.json() 
+            : { error: await response.text() };
+
+        if (!response.ok) {
+            throw new Error(responseData.error || `HTTP error! Status: ${response.status}`);
+        }
+        return responseData;
+    })
     .then(data => {
         hideLoading();
-        updateStatusMessage(`Model training completed (${model})`, 'success');
         
-        // Format training results
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
+        updateStatusMessage(`${modelNames[model]} model trained successfully`, 'success');
+        
         const outputHTML = `
             <div class="step-result">
-                <h3 class="step-title">Model Training Results (${model})</h3>
+                <h3 class="step-title">${modelNames[model]} Results</h3>
                 <div class="alert alert-success">
-                    Model trained successfully
+                    ${data.message}
                 </div>
                 <div class="mt-3">
-                    <h4 style="color: lightblue;">Model Details:</h4>
+                    <h4 style="color: lightblue;">Model Accuracy:</h4>
                     <table class="data-table">
                         <tr>
-                            <th>Metric</th>
-                            <th>Value</th>
+                            <th>Dataset</th>
+                            <th>Accuracy</th>
                         </tr>
-                        ${data.accuracy ? `<tr><td>Accuracy</td><td>${(data.accuracy * 100).toFixed(2)}%</td></tr>` : ''}
-                        ${data.precision ? `<tr><td>Precision</td><td>${data.precision.toFixed(4)}</td></tr>` : ''}
-                        ${data.recall ? `<tr><td>Recall</td><td>${data.recall.toFixed(4)}</td></tr>` : ''}
-                        ${data.f1_score ? `<tr><td>F1 Score</td><td>${data.f1_score.toFixed(4)}</td></tr>` : ''}
+                        <tr>
+                            <td>Validation</td>
+                            <td>${(data.validation_accuracy * 100).toFixed(2)}%</td>
+                        </tr>
+                        <tr>
+                            <td>Test</td>
+                            <td>${(data.test_accuracy * 100).toFixed(2)}%</td>
+                        </tr>
                     </table>
                 </div>
-                ${data.tree_structure ? `
                 <div class="mt-3">
-                    <h4 style="color: lightblue;">Model Structure:</h4>
-                    <div class="model-structure">${data.tree_structure}</div>
+                    <p>Model saved as: <code>${data.model_path || model + '.pkl'}</code></p>
+                </div>
+                ${data.traceback ? `
+                <div class="mt-3 alert alert-warning">
+                    <h5>Debug Info:</h5>
+                    <pre>${data.traceback}</pre>
                 </div>
                 ` : ''}
             </div>
@@ -445,8 +490,25 @@ function trainModel(model) {
     })
     .catch(error => {
         hideLoading();
-        updateStatusMessage("Training error: " + error.message, 'danger');
-        console.error("Training Error:", error);
+        let errorMsg = error.message;
+        
+        // Clean up HTML error messages
+        if (errorMsg.includes('<') && errorMsg.includes('>')) {
+            errorMsg = "Server returned an error page. Check console for details.";
+        }
+        
+        updateStatusMessage(`Training error: ${errorMsg}`, 'danger');
+        console.error("Full error:", error);
+        
+        document.getElementById('currentStepOutput').innerHTML = `
+            <div class="alert alert-danger">
+                <strong>Error training ${modelNames[model] || model}:</strong><br>
+                ${errorMsg}<br><br>
+                <button class="btn btn-sm btn-secondary" onclick="console.error('Full error:', ${JSON.stringify(error)})">
+                    Show Error in Console
+                </button>
+            </div>
+        `;
     });
 }
 

@@ -5,7 +5,7 @@ from routes.preprocess_routes import preprocess_routes
 from routes.feature_selection import feature_selection_routes
 from routes.normalization import normalization_routes
 from routes.train_model import train_model_routes
-from routes.prediction_routes import prediction_routes
+from routes.traffic import traffic
 import os
 
 app = Flask(__name__)
@@ -24,12 +24,12 @@ app.register_blueprint(preprocess_routes)
 app.register_blueprint(feature_selection_routes)
 app.register_blueprint(normalization_routes)
 app.register_blueprint(train_model_routes)
-app.register_blueprint(prediction_routes)
+app.register_blueprint(traffic, url_prefix='/traffic')
 
 # Route for user monitoring (must come before the __main__ check)
-@app.route('/user_monitoring')
-def user_monitoring():
-    return render_template('user_monitoring.html')
+# @app.route('/traffic')
+# def user_monitoring():
+#     return render_template('traffic.html')
 
 if __name__ == '__main__':
     app.run(debug=True) 
